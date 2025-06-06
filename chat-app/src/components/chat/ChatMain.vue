@@ -2,7 +2,7 @@
   <div class="chat-main">
     <div class="chat-header">
       <div class="current-session-title">
-        {{ currentSession?.title || '知识点答疑' }}
+        {{ currentSession?.title || '教材知识点答疑' }}
       </div>
       <div class="chat-actions">
         <t-button size="small" theme="default" @click="checkApiConnection">
@@ -45,7 +45,7 @@ import type { Session } from '@/types/chat';
 import type { Message } from '@/types/message';
 import ChatService from '@/services/ChatService';
 import { messagesApi } from '@/api/messages';
-import { Button as TButton, Icon as TIcon, MessagePlugin } from 'tdesign-vue-next';
+import { Button as TButton, Icon as TIcon, MessagePlugin, DialogPlugin } from 'tdesign-vue-next';
 
 const props = defineProps<{
   currentSession: Session | null;
@@ -83,7 +83,11 @@ const fetchMessages = async (sessionId: string) => {
     console.log('Fetched messages:', messages.value);
   } catch (error: any) {
     console.error('获取消息失败:', error.message, error.stack, error);
-    alert('获取消息失败');
+    MessagePlugin.error({
+      content: '获取消息失败',
+      duration: 3000,
+      closeBtn: true,
+    });
   } finally {
     loadingMessages.value = false;
     nextTick(() => {
@@ -188,6 +192,9 @@ const handleSendMessage = async (content: string, imageFile: File | null = null,
               messages.value[userIndex] = { ...messages.value[userIndex], image_path: imagePath };
             }
             
+            // 确保重置上传状态
+            resetUploadState();
+            
             // Success - break out of retry loop
             break;
           } catch (error: any) {
@@ -206,6 +213,34 @@ const handleSendMessage = async (content: string, imageFile: File | null = null,
         
         // If we got here with uploadError still set, it means all retries failed
         if (uploadError && !imagePath) {
+          const dialog = DialogPlugin.confirm({
+            header: '图片上传失败',
+            body: '是否继续发送文本消息？',
+            confirmBtn: '继续发送',
+            cancelBtn: '取消',
+            closeOnEscKeydown: true,
+            closeOnOverlayClick: true,
+            theme: 'warning',
+            onConfirm: () => {
+              console.log('[ChatMain] Continuing without image after user confirmation');
+              imagePath = null;
+              // 关闭确认对话框
+              dialog.hide();
+            },
+            onClose: () => {
+              console.log('[ChatMain] User cancelled message after image upload failure');
+              sending.value = false;
+              // Remove the messages since we're cancelling
+              messages.value = messages.value.filter(m => m.id !== aiMessageId && m.id !== userMessage.id);
+              // Notify UI that we're done with uploading and there was an error
+              MessagePlugin.error({
+                content: '图片上传失败: ' + (uploadError.message || '未知错误'),
+                duration: 30000,
+                closeBtn: true,
+              });
+            }
+          });
+        } else {
           throw uploadError;
         }
       } catch (error: any) {
@@ -219,22 +254,34 @@ const handleSendMessage = async (content: string, imageFile: File | null = null,
           stack: error.stack
         });
         
-        // Ask user if they want to continue without the image
-        if (confirm('图片上传失败，是否继续发送文本消息？')) {
-          console.log('[ChatMain] Continuing without image after user confirmation');
-          imagePath = null;
-        } else {
-          console.log('[ChatMain] User cancelled message after image upload failure');
-          sending.value = false;
-          // Remove the messages since we're cancelling
-          messages.value = messages.value.filter(m => m.id !== aiMessageId && m.id !== userMessage.id);
-          // Notify UI that we're done with uploading and there was an error
-          MessagePlugin.error({
-            content: '图片上传失败: ' + (error.message || '未知错误'),
-            duration: 3000
-          });
-          return;
-        }
+        // 使用DialogPlugin替代原生confirm
+        const dialog = DialogPlugin.confirm({
+          header: '图片上传失败',
+          body: '是否继续发送文本消息？',
+          confirmBtn: '继续发送',
+          cancelBtn: '取消',
+          closeOnEscKeydown: true,
+          closeOnOverlayClick: true,
+          theme: 'warning',
+          onConfirm: () => {
+            console.log('[ChatMain] Continuing without image after user confirmation');
+            imagePath = null;
+            // 关闭确认对话框
+            dialog.hide();
+          },
+          onClose: () => {
+            console.log('[ChatMain] User cancelled message after image upload failure');
+            sending.value = false;
+            // Remove the messages since we're cancelling
+            messages.value = messages.value.filter(m => m.id !== aiMessageId && m.id !== userMessage.id);
+            // Notify UI that we're done with uploading and there was an error
+            MessagePlugin.error({
+              content: '图片上传失败: ' + (error.message || '未知错误'),
+              duration: 30000,
+              closeBtn: true,
+            });
+          }
+        });
       }
     } else {
       // No image, add messages directly
@@ -445,6 +492,8 @@ const handleSendMessage = async (content: string, imageFile: File | null = null,
     });
   } finally {
     sending.value = false;
+    // 确保在所有情况下都重置上传状态
+    resetUploadState();
   }
 };
 
@@ -485,22 +534,38 @@ const checkApiConnection = async () => {
       console.log('[ChatMain] API connection successful:', result);
       MessagePlugin.success({
         content: '连接成功: ' + result.message,
-        duration: 3000
+        duration: 30000
       });
     } else {
       console.error('[ChatMain] API connection failed:', result);
       MessagePlugin.error({
         content: '连接失败: ' + result.message,
-        duration: 5000
+        duration: 50000
       });
     }
   } catch (error: any) {
     console.error('[ChatMain] Error checking API connection:', error);
     MessagePlugin.error({
       content: '检查连接时出错: ' + (error.message || '未知错误'),
-      duration: 5000
+      duration: 50000
     });
   }
+};
+
+// 添加重置上传状态的方法
+const resetUploadState = () => {
+  console.log('[ChatMain] Explicitly resetting upload state');
+  sending.value = false;
+  
+  // 确保MessageList组件的上传状态被重置
+  nextTick(() => {
+    if (messageListRef.value) {
+      // 使用公开的方法重置上传状态
+      if (typeof messageListRef.value.resetUploadState === 'function') {
+        messageListRef.value.resetUploadState();
+      }
+    }
+  });
 };
 </script>
 

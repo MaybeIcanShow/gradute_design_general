@@ -1,0 +1,248 @@
+<mxfile host="app.diagrams.net" modified="2023-11-01T12:00:00.000Z" agent="5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36" etag="abc123" version="15.5.0" type="device">
+  <diagram id="self-rag-workflow" name="Self-RAG系统工作流程">
+    <mxGraphModel dx="1422" dy="798" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- 标题 -->
+        <mxCell id="title" value="Self-RAG系统工作流程" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=32;fontStyle=1;fontColor=#333333;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="800" y="20" width="400" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- 图例 -->
+        <mxCell id="legend" value="&lt;b style=&quot;font-size: 22px;&quot;&gt;图例&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#2F5496&quot; style=&quot;font-size: 20px;&quot;&gt;■&lt;/font&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt; 处理步骤&lt;/span&gt;&lt;br&gt;&lt;font color=&quot;#7F6000&quot; style=&quot;font-size: 20px;&quot;&gt;■&lt;/font&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt; 决策点&lt;/span&gt;&lt;br&gt;&lt;font color=&quot;#385723&quot; style=&quot;font-size: 20px;&quot;&gt;■&lt;/font&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt; 输入/输出&lt;/span&gt;&lt;br&gt;&lt;font color=&quot;#5B3256&quot; style=&quot;font-size: 20px;&quot;&gt;■&lt;/font&gt;&lt;span style=&quot;font-size: 20px;&quot;&gt; 反思令牌&lt;/span&gt;" style="text;html=1;strokeColor=#666666;fillColor=#f9f9f9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;shadow=0;glass=0;fontSize=20;fontColor=#333333;spacingLeft=4;spacingRight=4;spacing=2;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1780" y="80" width="180" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- 阶段1: 检索决策阶段 -->
+        <mxCell id="phase1_title" value="阶段1: 检索决策阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#2F5496;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="100" y="80" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="start" value="开始" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E9EFF7;strokeColor=#2F5496;fontSize=22;fontStyle=0;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="60" y="160" width="80" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="question_input" value="用户问题输入" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#EBF1E9;strokeColor=#385723;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="170" y="160" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow1" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="start" target="question_input">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="150" y="185" as="sourcePoint" />
+            <mxPoint x="170" y="185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="retrieval_reflection" value="检索反思&lt;br&gt;(Retrieval Reflection)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3E9F6;strokeColor=#5B3256;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="350" y="160" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow2" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="question_input" target="retrieval_reflection">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="185" as="sourcePoint" />
+            <mxPoint x="340" y="185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="need_retrieval" value="需要检索吗？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#7F6000;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="530" y="150" width="150" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow3" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="retrieval_reflection" target="need_retrieval">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="490" y="185" as="sourcePoint" />
+            <mxPoint x="510" y="185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 阶段2: 文档检索与评估阶段 -->
+        <mxCell id="phase2_title" value="阶段2: 文档检索与评估阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#2F5496;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="700" y="80" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="document_retrieval" value="文档检索" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E9EFF7;strokeColor=#2F5496;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="710" y="160" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow4" value="是" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=18;fontStyle=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;fontFamily=Times New Roman;" edge="1" parent="1" source="need_retrieval" target="document_retrieval">
+          <mxGeometry x="-0.2" y="10" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="660" y="185" as="sourcePoint" />
+            <mxPoint x="700" y="185" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="relevance_reflection" value="相关性反思&lt;br&gt;(Relevance Reflection)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3E9F6;strokeColor=#5B3256;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="890" y="160" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow5" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="document_retrieval" target="relevance_reflection">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="850" y="185" as="sourcePoint" />
+            <mxPoint x="870" y="185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="docs_relevant" value="文档相关吗？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#7F6000;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="150" width="150" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow6" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="relevance_reflection" target="docs_relevant">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1020" y="185" as="sourcePoint" />
+            <mxPoint x="1040" y="185" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 阶段3: 答案生成阶段 -->
+        <mxCell id="phase3_title" value="阶段3: 答案生成阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#2F5496;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="700" y="280" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="answer_generation" value="答案生成" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E9EFF7;strokeColor=#2F5496;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="710" y="360" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow7" value="是" style="endArrow=block;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;fontSize=18;fontStyle=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;fontFamily=Times New Roman;edgeStyle=orthogonalEdgeStyle;" edge="1" parent="1" source="docs_relevant" target="answer_generation">
+          <mxGeometry x="-0.5" y="10" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1110" y="250" as="sourcePoint" />
+            <mxPoint x="1110" y="310" as="targetPoint" />
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="1145" y="385" />
+              <mxPoint x="860" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="skip_retrieval" value="" style="endArrow=block;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;curved=0;dashed=1;strokeWidth=1.5;strokeColor=#2F5496;endFill=1;" edge="1" parent="1" source="need_retrieval" target="answer_generation">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="580" y="240" as="sourcePoint" />
+            <mxPoint x="580" y="385" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="605" y="385" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="skip_retrieval_label" value="否 - 跳过检索" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=0;fontColor=#2F5496;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="555" y="250" width="100" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="skip_docs" value="" style="endArrow=block;html=1;rounded=0;exitX=0;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;curved=0;dashed=1;strokeWidth=1.5;strokeColor=#7F6000;endFill=1;" edge="1" parent="1" source="docs_relevant" target="answer_generation">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1040" y="230" as="sourcePoint" />
+            <mxPoint x="770" y="360" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1108" y="320" />
+              <mxPoint x="785" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="skip_docs_label" value="否 - 无相关文档" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=0;fontColor=#7F6000;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1000" y="290" width="110" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- 阶段4: 质量评估阶段 -->
+        <mxCell id="phase4_title" value="阶段4: 质量评估阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#2F5496;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="280" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="quality_reflection" value="质量反思&lt;br&gt;(Quality Reflection)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#F3E9F6;strokeColor=#5B3256;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="890" y="360" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow8" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="answer_generation" target="quality_reflection">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="850" y="385" as="sourcePoint" />
+            <mxPoint x="870" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="high_quality" value="高质量答案？" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#7F6000;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1070" y="350" width="150" height="70" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow9" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="quality_reflection" target="high_quality">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1020" y="385" as="sourcePoint" />
+            <mxPoint x="1040" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- 阶段5: 答案优化阶段 -->
+        <mxCell id="phase5_title" value="阶段5: 答案优化阶段" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=24;fontStyle=1;fontColor=#2F5496;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1200" y="480" width="350" height="30" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="answer_optimization" value="答案优化" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E9EFF7;strokeColor=#2F5496;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="360" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow10" value="否" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=18;fontStyle=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;fontFamily=Times New Roman;" edge="1" parent="1" source="high_quality" target="answer_optimization">
+          <mxGeometry x="-0.2" y="10" width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1190" y="385" as="sourcePoint" />
+            <mxPoint x="1220" y="385" as="targetPoint" />
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="final_answer" value="最终答案输出" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#EBF1E9;strokeColor=#385723;fontSize=20;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1430" y="360" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow11" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="answer_optimization" target="final_answer">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1370" y="385" as="sourcePoint" />
+            <mxPoint x="1400" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="end" value="结束" style="ellipse;whiteSpace=wrap;html=1;fillColor=#E9EFF7;strokeColor=#2F5496;fontSize=22;fontStyle=0;shadow=0;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1610" y="355" width="80" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="arrow12" value="" style="endArrow=block;html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;endFill=1;strokeWidth=1.5;strokeColor=#333333;" edge="1" parent="1" source="final_answer" target="end">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1550" y="385" as="sourcePoint" />
+            <mxPoint x="1580" y="385" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="skip_optimization" value="" style="endArrow=block;html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;edgeStyle=orthogonalEdgeStyle;curved=0;dashed=1;strokeWidth=1.5;strokeColor=#385723;endFill=1;" edge="1" parent="1" source="high_quality" target="final_answer">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="1110" y="320" as="sourcePoint" />
+            <mxPoint x="1470" y="320" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="1145" y="320" />
+              <mxPoint x="1505" y="320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        
+        <mxCell id="skip_optimization_label" value="是 - 高质量答案" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontStyle=0;fontColor=#385723;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="290" width="120" height="30" as="geometry" />
+        </mxCell>
+        
+        <!-- 注释 -->
+        <mxCell id="note" value="&lt;b style=&quot;font-size: 22px;&quot;&gt;Self-RAG系统的跳过路径与选择逻辑&lt;/b&gt;&lt;br style=&quot;font-size: 20px;&quot;&gt;&lt;br style=&quot;font-size: 20px;&quot;&gt;1. &lt;b style=&quot;font-size: 20px;&quot;&gt;无需检索路径&lt;/b&gt;: 当问题可以通过模型内在知识回答时，直接跳到答案生成阶段&lt;br style=&quot;font-size: 20px;&quot;&gt;2. &lt;b style=&quot;font-size: 20px;&quot;&gt;无相关文档路径&lt;/b&gt;: 当检索未找到相关文档时，仍进入答案生成阶段，但使用模型内在知识&lt;br style=&quot;font-size: 20px;&quot;&gt;3. &lt;b style=&quot;font-size: 20px;&quot;&gt;高质量答案路径&lt;/b&gt;: 当答案质量评分高时，跳过优化阶段直接输出" style="text;html=1;strokeColor=#666666;fillColor=#f9f9f9;align=left;verticalAlign=top;whiteSpace=wrap;rounded=0;shadow=0;glass=0;fontSize=20;fontColor=#333333;spacingLeft=4;spacingRight=4;spacing=2;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="60" y="480" width="550" height="180" as="geometry" />
+        </mxCell>
+        
+        <!-- 引用标记 -->
+        <mxCell id="citation" value="[1] Liu et al., 2023. Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection." style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=18;fontColor=#666666;fontFamily=Times New Roman;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="60" y="670" width="500" height="20" as="geometry" />
+        </mxCell>
+        
+        <!-- 学术水印 -->
+        <mxCell id="watermark" value="Self-RAG" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=44;fontColor=#F2F2F2;opacity=10;fontStyle=1;fontFamily=Times New Roman;" vertex="1" parent="1">
+          <mxGeometry x="870" y="600" width="270" height="60" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile> 

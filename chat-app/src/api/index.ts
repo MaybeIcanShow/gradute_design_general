@@ -17,13 +17,13 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000, // 30 seconds for AI correction tasks
+  timeout: 120000, // 120 seconds for AI correction tasks
 })
 
 // Log configuration
 console.log('[API Client] Configuration:', {
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  timeout: 30000
+  timeout: 120000
 })
 
 // Request interceptor to add auth token

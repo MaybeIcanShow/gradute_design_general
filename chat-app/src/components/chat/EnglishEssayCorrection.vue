@@ -48,7 +48,7 @@
         <div v-if="sending || localSending" class="loading">
           <div class="loading-spinner"></div>
           <div class="loading-text">正在分析您的作文，请稍候...</div>
-          <div class="loading-detail">这可能需要20-30秒的时间，AI正在进行语法、词汇、逻辑和表达分析</div>
+          <div class="loading-detail">这可能需要1-2分钟的时间，AI正在进行语法、词汇、逻辑和表达分析</div>
         </div>
         
         <!-- 批改结果部分 -->
@@ -93,7 +93,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, defineEmits, defineProps, onMounted } from 'vue';
+import { ref, computed, reactive, defineEmits, defineProps, onMounted, watch } from 'vue';
 import type { Session } from '@/types/chat';
 import { essaysApi, type Essay, type EssayCorrection } from '@/api/essays';
 import { MessagePlugin } from 'tdesign-vue-next';
@@ -155,16 +155,24 @@ const calculateStats = () => {
 
 // 加载会话中的上一次作文（如果有）
 const loadPreviousEssay = async () => {
-  if (!props.currentSessionId) return;
+  if (!props.currentSessionId) {
+    console.log('[EnglishEssayCorrection] 无效的会话ID，无法加载作文');
+    return;
+  }
   
   try {
+    console.log(`[EnglishEssayCorrection] 正在为会话 ${props.currentSessionId} 加载作文...`);
     localSending.value = true;
     const essays = await essaysApi.getSessionEssays(props.currentSessionId);
+    
+    console.log(`[EnglishEssayCorrection] 获取到 ${essays.length} 篇作文`);
     
     if (essays.length > 0) {
       // 获取最新的作文
       const latestEssay = essays[essays.length - 1];
       currentEssayId.value = latestEssay.id;
+      
+      console.log(`[EnglishEssayCorrection] 获取作文详情: ID=${latestEssay.id}`);
       
       // 获取完整的作文详情，包含批改结果
       try {
@@ -176,6 +184,8 @@ const loadPreviousEssay = async () => {
         essayText.value = essayDetail.content;
         selectedStage.value = essayDetail.stage;
         requirement.value = essayDetail.requirement || '';
+        
+        console.log(`[EnglishEssayCorrection] 成功加载作文内容, 长度: ${essayDetail.content.length}字符`);
         
         // 如果已经批改过（有分数），直接显示历史批改结果
         if (essayDetail.score !== null && essayDetail.corrections) {
@@ -196,13 +206,30 @@ const loadPreviousEssay = async () => {
             strengths: strengths.value.length,
             improvements: improvements.value.length
           });
+        } else {
+          console.log('[EnglishEssayCorrection] 作文尚未批改或没有批改结果');
+          showResult.value = false;
+          isHistorical.value = false;
         }
       } catch (error) {
-        console.error('获取作文详情失败:', error);
+        console.error('[EnglishEssayCorrection] 获取作文详情失败:', error);
+        MessagePlugin.warning('无法加载完整的作文详情，请尝试重新批改');
+        // 确保UI不会卡在加载状态
+        showResult.value = false;
       }
+    } else {
+      console.log('[EnglishEssayCorrection] 此会话没有作文记录');
+      // 清空表单，让用户创建新作文
+      essayText.value = '';
+      requirement.value = '';
+      showResult.value = false;
+      isHistorical.value = false;
     }
   } catch (error) {
-    console.error('加载会话作文失败:', error);
+    console.error('[EnglishEssayCorrection] 加载会话作文失败:', error);
+    MessagePlugin.warning('加载作文失败，请重试');
+    // 确保UI不会卡在加载状态
+    showResult.value = false;
   } finally {
     localSending.value = false;
   }
@@ -232,6 +259,9 @@ const submitEssay = async () => {
       return;
     }
     
+    console.log(`[EnglishEssayCorrection] 开始创建和批改作文，会话ID: ${props.currentSessionId}`);
+    console.log(`[EnglishEssayCorrection] 作文类型: ${selectedStage.value}, 长度: ${essayText.value.length}字符`);
+    
     // 1. 创建新作文
     const essay = await essaysApi.createEssay(
       props.currentSessionId,
@@ -241,27 +271,53 @@ const submitEssay = async () => {
     );
     
     currentEssayId.value = essay.id;
+    console.log(`[EnglishEssayCorrection] 作文创建成功，ID: ${essay.id}`);
     
     // 2. 批改作文
-    const result = await essaysApi.correctEssay(essay.id);
-    
-    // 3. 更新UI显示结果
-    currentEssay.value = result.essay;
-    corrections.value = result.corrections;
-    strengths.value = result.strengths;
-    improvements.value = result.improvements;
-    
-    // 4. 计算统计数据
-    calculateStats();
-    
-    // 5. 显示结果
-    showResult.value = true;
-    
-    // 6. 更新标记，这不再是历史批改结果
-    isHistorical.value = false;
-    
+    console.log(`[EnglishEssayCorrection] 开始批改作文，这可能需要1-2分钟...`);
+    try {
+      const result = await essaysApi.correctEssay(essay.id);
+      console.log(`[EnglishEssayCorrection] 作文批改成功，获取到 ${result.corrections.length} 处修改建议`);
+      
+      // 3. 更新UI显示结果
+      currentEssay.value = result.essay;
+      corrections.value = result.corrections;
+      strengths.value = result.strengths;
+      improvements.value = result.improvements;
+      
+      // 4. 计算统计数据
+      calculateStats();
+      
+      // 5. 显示结果
+      showResult.value = true;
+      
+      // 6. 更新标记，这不再是历史批改结果
+      isHistorical.value = false;
+      
+      // 成功消息提示
+      MessagePlugin.success('作文批改完成');
+    } catch (correctionError: any) {
+      console.error('[EnglishEssayCorrection] 作文批改过程中出错:', correctionError);
+      
+      // 特定错误处理
+      if (correctionError.status === 504 || correctionError.statusText === 'Gateway Timeout') {
+        MessagePlugin.error('作文批改超时，服务器可能繁忙，请稍后重试');
+      } else {
+        // 通用错误处理
+        let errorMsg = '作文批改失败';
+        if (correctionError.data && correctionError.data.detail) {
+          errorMsg += ': ' + correctionError.data.detail;
+        } else if (correctionError.message) {
+          errorMsg += ': ' + correctionError.message;
+        }
+        MessagePlugin.error(errorMsg);
+      }
+      
+      // 即使批改失败，仍然保留用户的作文内容
+      showResult.value = false;
+    }
   } catch (error: any) {
-    console.error('作文批改失败:', error);
+    console.error('[EnglishEssayCorrection] 作文创建或批改失败:', error);
     
     // 更详细的错误信息处理
     if (error.status === 401) {
@@ -287,6 +343,25 @@ const submitEssay = async () => {
 // 组件挂载时，尝试加载之前的作文
 onMounted(() => {
   loadPreviousEssay();
+});
+
+// 监听会话ID变化，重新加载作文
+watch(() => props.currentSessionId, (newSessionId, oldSessionId) => {
+  if (newSessionId && newSessionId !== oldSessionId) {
+    console.log('[EnglishEssayCorrection] 会话ID变化，重新加载作文:', newSessionId);
+    // 重置状态
+    essayText.value = '';
+    corrections.value = [];
+    strengths.value = [];
+    improvements.value = [];
+    currentEssay.value = null;
+    currentEssayId.value = null;
+    showResult.value = false;
+    isHistorical.value = false;
+    
+    // 加载新会话的作文
+    loadPreviousEssay();
+  }
 });
 </script>
 

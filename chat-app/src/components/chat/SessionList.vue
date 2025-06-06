@@ -7,28 +7,28 @@
         <button class="session-type-btn" @click="createNewSession('general')">
           <div class="btn-content">
             <span class="btn-icon">💬</span>
-            <span class="btn-text">普通对话</span>
+            <span class="btn-text">通用对话</span>
           </div>
           <span class="btn-arrow">→</span>
         </button>
         <button class="session-type-btn" @click="createNewSession('history')">
           <div class="btn-content">
             <span class="btn-icon">📚</span>
-            <span class="btn-text">知识点答疑</span>
+            <span class="btn-text">教材知识点答疑</span>
           </div>
           <span class="btn-arrow">→</span>
         </button>
         <button class="session-type-btn" @click="createNewSession('math')">
           <div class="btn-content">
             <span class="btn-icon">📊</span>
-            <span class="btn-text">数学求解</span>
+            <span class="btn-text">数理习题解答</span>
           </div>
           <span class="btn-arrow">→</span>
         </button>
         <button class="session-type-btn" @click="createNewSession('english')">
           <div class="btn-content">
             <span class="btn-icon">✏️</span>
-            <span class="btn-text">英语作文修改</span>
+            <span class="btn-text">英语作文批改</span>
           </div>
           <span class="btn-arrow">→</span>
         </button>
@@ -85,6 +85,7 @@ import { ref, defineProps, defineEmits, toRefs } from 'vue';
 import { format } from 'date-fns';
 import type { Session } from '@/types/chat';
 import ChatService from '@/services/ChatService';
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next';
 
 const props = defineProps<{
   sessions: Session[];
@@ -133,23 +134,34 @@ const createNewSession = async (type: string = 'general') => {
     let chat_type = type;
     switch (type) {
       case 'history':
-        title = '知识点问答';
+        title = '教材知识点答疑';
         break;
       case 'math':
-        title = '数学求解';
+        title = '数理习题解答';
         break;
       case 'english':
-        title = '英语作文修改';
+        title = '英语作文批改';
         break;
       default:
-        title = '普通对话';
+        title = '通用对话';
     }
     
     const newSession = await ChatService.createSession(title, chat_type);
     emit('session-created', newSession);
+    
+    // 显示创建成功的提示
+    MessagePlugin.success({
+      content: '新会话已创建',
+      duration: 2000,
+      closeBtn: true,
+    });
   } catch (error) {
     console.error('创建会话失败:', error);
-    alert('创建会话失败');
+    MessagePlugin.error({
+      content: '创建会话失败',
+      duration: 3000,
+      closeBtn: true,
+    });
   }
 };
 
@@ -165,46 +177,67 @@ const selectSession = (sessionId: string) => {
 
 // Delete a session
 const deleteSession = async (session: Session) => {
-  if (!confirm('确定要删除这个会话吗？')) {
-    return;
-  }
-  
-  try {
-    // Get the session ID before deletion
-    const sessionId = String(session.id);
-    console.log('Attempting to delete session:', sessionId);
-    
-    // Call API to delete the session
-    await ChatService.deleteSession(sessionId);
-    console.log('Session deleted successfully:', sessionId);
-    
-    // Force a refresh of the sessions list
-    await emit('sessions-updated');
-    
-    // Notify parent that session was deleted
-    emit('session-deleted', sessionId);
-    
-    // If the deleted session was the current one, select another session if available
-    if (currentSessionId.value === sessionId) {
-      console.log('Current session was deleted, selecting a new session');
-      // Wait a moment for the sessions list to update
-      setTimeout(() => {
-        if (props.sessions.length > 0) {
-          const nextSession = props.sessions.find(s => String(s.id) !== sessionId);
-          if (nextSession) {
-            console.log('Selecting new session:', nextSession.id);
-            emit('session-selected', String(nextSession.id));
-          } else if (props.sessions[0]) {
-            console.log('Selecting first available session:', props.sessions[0].id);
-            emit('session-selected', String(props.sessions[0].id));
-          }
+  const dialog = DialogPlugin.confirm({
+    header: '删除会话',
+    body: '确定要删除这个会话吗？',
+    confirmBtn: '删除',
+    cancelBtn: '取消',
+    closeOnEscKeydown: true,
+    closeOnOverlayClick: true,
+    theme: 'warning',
+    onConfirm: async () => {
+      try {
+        // Get the session ID before deletion
+        const sessionId = String(session.id);
+        console.log('Attempting to delete session:', sessionId);
+        
+        // 关闭确认对话框
+        dialog.hide();
+        
+        // Call API to delete the session
+        await ChatService.deleteSession(sessionId);
+        console.log('Session deleted successfully:', sessionId);
+        
+        // 显示删除成功的提示
+        MessagePlugin.success({
+          content: '会话已成功删除',
+          duration: 2000,
+          closeBtn: true,
+        });
+        
+        // Force a refresh of the sessions list
+        await emit('sessions-updated');
+        
+        // Notify parent that session was deleted
+        emit('session-deleted', sessionId);
+        
+        // If the deleted session was the current one, select another session if available
+        if (currentSessionId.value === sessionId) {
+          console.log('Current session was deleted, selecting a new session');
+          // Wait a moment for the sessions list to update
+          setTimeout(() => {
+            if (props.sessions.length > 0) {
+              const nextSession = props.sessions.find(s => String(s.id) !== sessionId);
+              if (nextSession) {
+                console.log('Selecting new session:', nextSession.id);
+                emit('session-selected', String(nextSession.id));
+              } else if (props.sessions[0]) {
+                console.log('Selecting first available session:', props.sessions[0].id);
+                emit('session-selected', String(props.sessions[0].id));
+              }
+            }
+          }, 100);
         }
-      }, 100);
-    }
-  } catch (error) {
-    console.error('删除会话失败:', error);
-    alert('删除会话失败');
-  }
+      } catch (error) {
+        console.error('删除会话失败:', error);
+        MessagePlugin.error({
+          content: '删除会话失败',
+          duration: 3000,
+          closeBtn: true,
+        });
+      }
+    },
+  });
 };
 
 // Edit a session

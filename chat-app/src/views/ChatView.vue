@@ -33,13 +33,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { createApp, ref, watch, nextTick, onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import SessionList from '@/components/chat/SessionList.vue';
 import ChatMain from '@/components/chat/ChatMain.vue';
 import EditSessionDialog from '@/components/chat/EditSessionDialog.vue';
 import ChatService from '@/services/ChatService';
 import type { Session } from '@/types/chat';
+import { MessagePlugin } from 'tdesign-vue-next';
 
 // 状态变量
 const router = useRouter();
@@ -101,7 +102,11 @@ const fetchSessions = async () => {
     }
   } catch (error) {
     console.error('获取会话列表失败:', error);
-    alert('获取会话列表失败');
+    MessagePlugin.error({
+      content: '获取会话列表失败',
+      duration: 3000,
+      closeBtn: true,
+    });
   } finally {
     loadingSessions.value = false;
   }
@@ -155,6 +160,13 @@ const updateSessionTitle = async (sessionId: string, title: string) => {
   try {
     await ChatService.updateSessionTitle(sessionId, title);
     
+    // 显示更新成功提示
+    MessagePlugin.success({
+      content: '会话标题已更新',
+      duration: 2000,
+      closeBtn: true,
+    });
+    
     // 更新本地会话标题
     const session = sessions.value.find(s => String(s.id) === sessionId);
     if (session) {
@@ -162,7 +174,11 @@ const updateSessionTitle = async (sessionId: string, title: string) => {
     }
   } catch (error) {
     console.error('更新会话标题失败:', error);
-    alert('更新会话标题失败');
+    MessagePlugin.error({
+      content: '更新会话标题失败',
+      duration: 3000,
+      closeBtn: true,
+    });
   }
 };
 

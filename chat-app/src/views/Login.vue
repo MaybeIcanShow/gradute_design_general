@@ -1,7 +1,7 @@
 <template>
   <div class="login-card">
     <div class="login-header">
-      <h1 class="app-title">Chat App</h1>
+      <h1 class="app-title">智慧教育系统</h1>
       <h2 class="login-title">欢迎回来</h2>
       <p class="login-subtitle">请登录您的账户以继续</p>
     </div>
@@ -48,6 +48,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { MessagePlugin } from 'tdesign-vue-next'
 
 // 简化版登录页面
 const username = ref('')
@@ -92,7 +93,11 @@ const onSubmit = async () => {
     localStorage.setItem('user', JSON.stringify(response.data.user))
     
     // 显示成功消息
-    alert('登录成功')
+    MessagePlugin.success({
+      content: '登录成功',
+      duration: 2000,
+      closeBtn: true,
+    })
     
     // 跳转到聊天页面
     router.push('/chat')

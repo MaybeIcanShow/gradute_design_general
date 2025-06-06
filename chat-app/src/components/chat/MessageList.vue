@@ -15,7 +15,6 @@
         
         <div v-for="(message, index) in messages" :key="index" class="message-wrapper">
           <t-chat-item 
-            :avatar="message.role === 'user' ? userAvatar : aiAvatar"
             :name="message.role === 'user' ? '你' : '知识助手'"
             :datetime="formatDate(message.created_at)"
             align="left"
@@ -69,7 +68,7 @@
           <!-- 图片上传按钮 -->
           <label for="image-upload" class="image-upload-btn" :class="{ 'disabled': isImageUploadDisabled }">
             <t-icon name="image" />
-            <span class="upload-text">{{ uploadingImage ? '正在上传...' : isImageUploadDisabled && props.chatType === 'history' ? '历史模式禁止上传' : '上传图片' }}</span>
+            <span class="upload-text">{{ uploadButtonText }}</span>
           </label>
           <input 
             id="image-upload" 
@@ -112,7 +111,7 @@ import { ref, defineProps, defineExpose, defineEmits, onMounted, watch, nextTick
 import { format } from 'date-fns';
 import type { Message } from '@/types/message';
 import { ChatItem as TChatItem, ChatContent as TChatContent, ChatLoading as TChatLoading, ChatSender as TChatSender } from '@tdesign-vue-next/chat';
-import { Button as TButton, Icon as TIcon } from 'tdesign-vue-next';
+import { Button as TButton, Icon as TIcon, MessagePlugin } from 'tdesign-vue-next';
 import { messagesApi } from '@/api/messages';
 
 const props = defineProps<{
@@ -184,14 +183,27 @@ const selectedImagePreview = computed(() => {
 
 // 添加计算属性来检查是否应该禁用图片上传
 const isImageUploadDisabled = computed(() => {
-  return props.chatType === 'history' || uploadingImage.value;
+  return props.chatType === 'history' || props.chatType === 'general' || uploadingImage.value;
+});
+
+// 图片上传按钮文本
+const uploadButtonText = computed(() => {
+  if (uploadingImage.value) {
+    return '正在上传...';
+  } else if (props.chatType === 'history') {
+    return '历史模式禁止上传';
+  } else if (props.chatType === 'general') {
+    return '通用模式禁止上传';
+  } else {
+    return '上传图片';
+  }
 });
 
 // 简化版的文件选择处理
 const simplifiedFileSelect = (event: Event) => {
-  // 如果是历史模式，不允许上传图片
-  if (props.chatType === 'history') {
-    console.log('[MessageList] 历史模式禁止上传图片');
+  // 如果是历史模式或通用模式，不允许上传图片
+  if (props.chatType === 'history' || props.chatType === 'general') {
+    console.log(`[MessageList] ${props.chatType === 'history' ? '历史' : '通用'}模式禁止上传图片`);
     return;
   }
   
@@ -209,7 +221,11 @@ const simplifiedFileSelect = (event: Event) => {
   // 验证文件大小
   if (file.size > 10 * 1024 * 1024) { // 10MB
     console.warn('[MessageList] 文件太大:', file.size);
-    alert('图片太大，请选择小于10MB的图片');
+    MessagePlugin.warning({
+      content: '图片太大，请选择小于10MB的图片',
+      duration: 3000,
+      closeBtn: true,
+    });
     return;
   }
   
@@ -234,7 +250,11 @@ const simplifiedFileSelect = (event: Event) => {
   
   if (!isValidType) {
     console.warn('[MessageList] 不支持的文件类型:', file.type);
-    alert('请选择支持的图片格式：JPEG、PNG、GIF、WEBP或BMP');
+    MessagePlugin.warning({
+      content: '请选择支持的图片格式：JPEG、PNG、GIF、WEBP或BMP',
+      duration: 3000,
+      closeBtn: true,
+    });
     return;
   }
   
@@ -262,7 +282,11 @@ const simplifiedSend = () => {
     // 提供更详细的错误信息
     if (!sessionId.value) {
       console.warn('[MessageList] 无法发送消息: 没有有效的会话ID');
-      alert('没有选择聊天会话，请先创建或选择一个会话');
+      MessagePlugin.warning({
+        content: '没有选择聊天会话，请先创建或选择一个会话',
+        duration: 3000,
+        closeBtn: true,
+      });
     } else if (sending.value) {
       console.warn('[MessageList] 无法发送消息: 正在发送中');
     } else if (uploadingImage.value) {
@@ -279,9 +303,13 @@ const simplifiedSend = () => {
   const hasImage = !!selectedImage.value;
   
   // 如果是历史模式且有图片，禁止发送
-  if (props.chatType === 'history' && hasImage) {
-    console.warn('[MessageList] 历史模式禁止发送图片');
-    alert('历史聊天模式不支持图片上传');
+  if ((props.chatType === 'history' || props.chatType === 'general') && hasImage) {
+    console.warn(`[MessageList] ${props.chatType === 'history' ? '历史' : '通用'}模式禁止发送图片`);
+    MessagePlugin.warning({
+      content: `${props.chatType === 'history' ? '历史' : '通用'}模式不支持图片上传`,
+      duration: 3000,
+      closeBtn: true,
+    });
     clearSelectedImage();
     return;
   }
@@ -298,6 +326,15 @@ const simplifiedSend = () => {
   
   if (hasImage) {
     uploadingImage.value = true;
+    
+    // 添加安全超时，确保上传动画最多显示30秒
+    setTimeout(() => {
+      if (uploadingImage.value) {
+        console.log('[MessageList] 强制清除上传状态（超时）');
+        uploadingImage.value = false;
+        clearSelectedImage();
+      }
+    }, 30000); // 30秒超时
   }
   
   // 发送消息
@@ -334,6 +371,13 @@ const clearSelectedImage = () => {
   }
 };
 
+// 重置上传状态
+const resetUploadState = () => {
+  uploadingImage.value = false;
+  clearSelectedImage();
+  console.log('[MessageList] Upload state reset');
+};
+
 // 获取图片URL
 const getImageUrl = (imagePath: string) => {
   try {
@@ -367,9 +411,9 @@ const updateInput = (value: string) => {
 
 const messagesContainer = ref<HTMLElement | null>(null);
 
-// 头像 URL
-const userAvatar = 'https://tdesign.gtimg.com/site/avatar.jpg';
-const aiAvatar = 'https://tdesign.gtimg.com/site/avatars/knowledge-assistant.png';
+// 头像 URL - 使用内联的Base64编码SVG图像 (更新为更美观的设计)
+const userAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSIxMDAiIGZpbGw9IiMzNDk4ZGIiLz4KICA8Y2lyY2xlIGN4PSIxMDAiIGN5PSI4NSIgcj0iMzUiIGZpbGw9IiNlY2YwZjEiLz4KICA8cGF0aCBkPSJNMTYwIDE2NWMwLTMzLjEzNy0yNi44NjMtNjAtNjAtNjBzLTYwIDI2Ljg2My02MCA2MGMwIDUgMCAxNSAwIDE1aDEyMGMwIDAgMC0xMCAwLTE1eiIgZmlsbD0iI2VjZjBmMSIvPgogIDxwYXRoIGQ9Ik0xMDAgMTIwYzE2LjU2OSAwIDMwLTEzLjQzMSAzMC0zMHYtMTBjMC01LjUyMy00LjQ3Ny0xMC0xMC0xMGgtNDBjLTUuNTIzIDAtMTAgNC40NzctMTAgMTB2MTBjMCAxNi41NjkgMTMuNDMxIDMwIDMwIDMweiIgZmlsbD0iIzM0OThkYiIvPgogIDxjaXJjbGUgY3g9IjgwIiBjeT0iODAiIHI9IjUiIGZpbGw9IiMyYzNlNTAiLz4KICA8Y2lyY2xlIGN4PSIxMjAiIGN5PSI4MCIgcj0iNSIgZmlsbD0iIzJjM2U1MCIvPgogIDxwYXRoIGQ9Ik0xMDAgMTAwYzUuNTIzIDAgMTAgNC40NzcgMTAgMTBzLTQuNDc3IDEwLTEwIDEwLTEwLTQuNDc3LTEwLTEwIDQuNDc3LTEwIDEwLTEweiIgZmlsbD0iI2U3NGMzYyIvPgo8L3N2Zz4=';
+const aiAvatar = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGNpcmNsZSBjeD0iMTAwIiBjeT0iMTAwIiByPSIxMDAiIGZpbGw9IiM5YjU5YjYiLz4KICA8cGF0aCBkPSJNMTYwIDE2NWMwLTMzLjEzNy0yNi44NjMtNjAtNjAtNjBzLTYwIDI2Ljg2My02MCA2MGMwIDUgMCAxNSAwIDE1aDEyMGMwIDAgMC0xMCAwLTE1eiIgZmlsbD0iI2VjZjBmMSIvPgogIDxwYXRoIGQ9Ik0xMzAgOTBjMC0xNi41NjktMTMuNDMxLTMwLTMwLTMwcy0zMCAxMy40MzEtMzAgMzBjMCA1LjUyMyA0LjQ3NyAxMCAxMCAxMGg0MGM1LjUyMyAwIDEwLTQuNDc3IDEwLTEweiIgZmlsbD0iI2VjZjBmMSIvPgogIDxjaXJjbGUgY3g9IjgwIiBjeT0iODAiIHI9IjEwIiBmaWxsPSIjOWI1OWI2Ii8+CiAgPGNpcmNsZSBjeD0iMTIwIiBjeT0iODAiIHI9IjEwIiBmaWxsPSIjOWI1OWI2Ii8+CiAgPGNpcmNsZSBjeD0iODAiIGN5PSI4MCIgcj0iNSIgZmlsbD0iIzJjM2U1MCIvPgogIDxjaXJjbGUgY3g9IjEyMCIgY3k9IjgwIiByPSI1IiBmaWxsPSIjMmMzZTUwIi8+CiAgPHBhdGggZD0iTTExMCAxMTBIOTBjMCA1LjUyMyA0LjQ3NyAxMCAxMCAxMHMxMC00LjQ3NyAxMC0xMHoiIGZpbGw9IiNlY2YwZjEiLz4KICA8cGF0aCBkPSJNODAgMTMwYzAgNS41MjMgNC40NzcgMTAgMTAgMTBoMjBjNS41MjMgMCAxMC00LjQ3NyAxMC0xMHYtMTBIODBWMTMweiIgZmlsbD0iIzliNTliNiIvPgogIDxwYXRoIGQ9Ik0xMjAgNjBjMC01LjUyMy00LjQ3Ny0xMC0xMC0xMGgtMjBjLTUuNTIzIDAtMTAgNC40NzctMTAgMTB2MTBjMCA1LjUyMyA0LjQ3NyAxMCAxMCAxMGgyMGM1LjUyMyAwIDEwLTQuNDc3IDEwLTEwVjYweiIgZmlsbD0iIzliNTliNiIvPgo8L3N2Zz4=';
 
 // Scroll to bottom when messages change
 watch(() => props.messages, () => {
@@ -456,16 +500,19 @@ const scrollToBottom = () => {
   }
 };
 
-// Expose scrollToBottom method
+// Expose methods
 defineExpose({
-  scrollToBottom
+  scrollToBottom,
+  clearSelectedImage,
+  resetUploadState
 });
 
 // 更新watch以监听props.sending的变化
 watch(() => props.sending, (newValue) => {
   sending.value = newValue;
   // 当发送状态结束时，清除上传状态和图片
-  if (!newValue && uploadingImage.value) {
+  if (!newValue) {
+    // Always reset uploadingImage when sending is complete
     uploadingImage.value = false;
     clearSelectedImage();
   }

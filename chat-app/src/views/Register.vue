@@ -1,7 +1,7 @@
 <template>
   <div class="register-card">
     <div class="register-header">
-      <h1 class="app-title">Chat App</h1>
+      <h1 class="app-title">智慧教育系统</h1>
       <h2 class="register-title">创建账户</h2>
       <p class="register-subtitle">请填写以下信息完成注册</p>
     </div>
@@ -59,6 +59,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
+import { MessagePlugin } from 'tdesign-vue-next'
 
 // 简化版注册页面
 const username = ref('')
@@ -112,7 +113,11 @@ const onSubmit = async () => {
     console.log('注册成功:', response.data)
     
     // 显示成功消息
-    alert('注册成功，请登录')
+    MessagePlugin.success({
+      content: '注册成功，请登录',
+      duration: 2000,
+      closeBtn: true,
+    })
     
     // 跳转到登录页面
     router.push('/login')

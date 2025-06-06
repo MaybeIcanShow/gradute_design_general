@@ -80,7 +80,21 @@ function addCopyCodeFunction() {
       }
     }).catch(err => {
       console.error('复制失败:', err);
-      alert('复制失败，请手动复制');
+      
+      // 找到复制按钮，显示错误信息
+      const button = codeElement.closest('.code-block-wrapper')?.querySelector('.copy-button');
+      if (button) {
+        // 临时改变按钮文本显示错误
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '复制失败 ✗';
+        (button as HTMLElement).style.color = 'red';
+        
+        // 2秒后还原
+        setTimeout(() => {
+          button.innerHTML = originalHTML;
+          (button as HTMLElement).style.color = '';
+        }, 2000);
+      }
     });
   };
 }
@@ -197,17 +211,161 @@ function addCodeBlockStyles() {
   document.head.appendChild(style);
 }
 
+// 添加反思token样式
+function addReflectionTokenStyles() {
+  if (document.getElementById('reflection-token-styles')) {
+    return; // 已经添加过
+  }
+  
+  const style = document.createElement('style');
+  style.id = 'reflection-token-styles';
+  style.textContent = `
+    /* 反思token样式 */
+    .reflection-token {
+      display: inline-block;
+      padding: 2px 6px;
+      margin: 0 2px;
+      border-radius: 4px;
+      font-size: 0.9em;
+      font-weight: 500;
+    }
+    
+    /* 检索相关token */
+    .token-retrieve {
+      background-color: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #bbdefb;
+    }
+    
+    .token-no-retrieve {
+      background-color: #f5f5f5;
+      color: #757575;
+      border: 1px solid #e0e0e0;
+    }
+    
+    /* 相关性token */
+    .token-relevant {
+      background-color: #e8f5e9;
+      color: #388e3c;
+      border: 1px solid #c8e6c9;
+    }
+    
+    .token-irrelevant {
+      background-color: #ffebee;
+      color: #d32f2f;
+      border: 1px solid #ffcdd2;
+    }
+    
+    /* 支持度token */
+    .token-fully-supported {
+      background-color: #e8f5e9;
+      color: #388e3c;
+      border: 1px solid #c8e6c9;
+    }
+    
+    .token-partially-supported {
+      background-color: #fff8e1;
+      color: #ffa000;
+      border: 1px solid #ffecb3;
+    }
+    
+    .token-no-support {
+      background-color: #ffebee;
+      color: #d32f2f;
+      border: 1px solid #ffcdd2;
+    }
+    
+    /* 有用性token */
+    .token-utility-5 {
+      background-color: #e8f5e9;
+      color: #388e3c;
+      border: 1px solid #c8e6c9;
+    }
+    
+    .token-utility-3 {
+      background-color: #fff8e1;
+      color: #ffa000;
+      border: 1px solid #ffecb3;
+    }
+    
+    .token-utility-1 {
+      background-color: #ffebee;
+      color: #d32f2f;
+      border: 1px solid #ffcdd2;
+    }
+  `;
+  
+  document.head.appendChild(style);
+}
+
+// 增强渲染，处理反思token
+function enhanceWithReflectionTokens(html: string): string {
+  // 添加反思token样式
+  addReflectionTokenStyles();
+  
+  // 定义反思token正则表达式和对应的样式类
+  const tokenPatterns = [
+    { regex: /\[Retrieve\]/g, class: 'token-retrieve' },
+    { regex: /\[No Retrieve\]/g, class: 'token-no-retrieve' },
+    { regex: /\[Relevant\]/g, class: 'token-relevant' },
+    { regex: /\[Irrelevant\]/g, class: 'token-irrelevant' },
+    { regex: /\[Fully supported\]/g, class: 'token-fully-supported' },
+    { regex: /\[Partially supported\]/g, class: 'token-partially-supported' },
+    { regex: /\[No support \/ Contradictory\]/g, class: 'token-no-support' },
+    { regex: /\[Utility:5\]/g, class: 'token-utility-5' },
+    { regex: /\[Utility:3\]/g, class: 'token-utility-3' },
+    { regex: /\[Utility:1\]/g, class: 'token-utility-1' }
+  ];
+  
+  // 处理每种反思token
+  let enhancedHtml = html;
+  tokenPatterns.forEach(pattern => {
+    enhancedHtml = enhancedHtml.replace(
+      pattern.regex,
+      `<span class="reflection-token ${pattern.class}">$&</span>`
+    );
+  });
+  
+  return enhancedHtml;
+}
+
 // 确保依赖已加载
 function ensureDependencies() {
   loadMathJax();
   addCopyCodeFunction();
   addCodeBlockStyles();
+  addReflectionTokenStyles(); // 添加反思token样式
 }
 
-// 预处理方括号公式
+// 修改预处理方括号公式函数，添加对反思token的特殊处理
 function preprocessSquareBrackets(html: string): string {
-  // 处理单独的方括号公式，例如 [ f(x) = ... ]
-  return html.replace(/\[(.*?)\]/g, (match, content) => {
+  // 先标记反思token，确保它们不被处理为公式
+  const reflectionTokens = [
+    '[Retrieve]', 
+    '[No Retrieve]', 
+    '[Relevant]', 
+    '[Irrelevant]', 
+    '[Fully supported]', 
+    '[Partially supported]', 
+    '[No support / Contradictory]',
+    '[Utility:5]',
+    '[Utility:3]',
+    '[Utility:1]'
+  ];
+  
+  // 创建一个临时html用于处理
+  let processedHtml = html;
+  
+  // 临时替换反思token为唯一标记，以防止它们被处理
+  reflectionTokens.forEach((token, index) => {
+    const placeholder = `__REFLECTION_TOKEN_${index}__`;
+    // 使用全局正则表达式替换所有出现的token
+    const tokenRegex = new RegExp(token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    processedHtml = processedHtml.replace(tokenRegex, placeholder);
+  });
+  
+  // 处理可能是数学公式的方括号内容
+  processedHtml = processedHtml.replace(/\[(.*?)\]/g, (match, content) => {
     // 检查是否是数学公式
     if (content.includes('\\') || content.includes('_') || content.includes('^') || 
         content.includes('\\sum') || content.includes('\\int') || content.includes('\\frac')) {
@@ -217,6 +375,16 @@ function preprocessSquareBrackets(html: string): string {
     // 如果不是数学公式，保持原样
     return match;
   });
+  
+  // 恢复反思token
+  reflectionTokens.forEach((token, index) => {
+    const placeholder = `__REFLECTION_TOKEN_${index}__`;
+    // 使用全局正则表达式替换所有占位符
+    const placeholderRegex = new RegExp(placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+    processedHtml = processedHtml.replace(placeholderRegex, token);
+  });
+  
+  return processedHtml;
 }
 
 // 渲染 LaTeX 公式
@@ -252,17 +420,20 @@ export function renderMarkdownWithMathJax(raw: string): string {
   // 渲染 Markdown
   const html = md.render(raw);
   
-  // 配置 DOMPurify 以允许我们的自定义代码块结构
+  // 配置 DOMPurify 以允许我们的自定义代码块结构和反思token样式
   const purifyConfig = {
-    ADD_TAGS: ['button', 'svg', 'path', 'rect'],
-    ADD_ATTR: ['onclick', 'stroke', 'fill', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'viewBox', 'rx', 'ry']
+    ADD_TAGS: ['button', 'svg', 'path', 'rect', 'span'],
+    ADD_ATTR: ['onclick', 'stroke', 'fill', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'viewBox', 'rx', 'ry', 'class']
   };
   
   // 清理 HTML
   const sanitized = DOMPurify.sanitize(html, purifyConfig);
   
+  // 增强处理反思token
+  const enhanced = enhanceWithReflectionTokens(sanitized);
+  
   // 渲染 MathJax
-  return renderMathJax(sanitized);
+  return renderMathJax(enhanced);
 }
 
 // 为 TypeScript 添加全局类型声明
