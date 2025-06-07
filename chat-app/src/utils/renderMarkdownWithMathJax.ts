@@ -223,11 +223,12 @@ function addReflectionTokenStyles() {
     /* 反思token样式 */
     .reflection-token {
       display: inline-block;
-      padding: 2px 6px;
+      padding: 1px 4px;
       margin: 0 2px;
-      border-radius: 4px;
-      font-size: 0.9em;
+      border-radius: 3px;
+      font-size: 0.85em;
       font-weight: 500;
+      line-height: 1.2;
     }
     
     /* 检索相关token */
@@ -293,6 +294,12 @@ function addReflectionTokenStyles() {
       color: #d32f2f;
       border: 1px solid #ffcdd2;
     }
+    
+    /* 文档列表项样式 */
+    strong {
+      font-weight: 600;
+      color: #333;
+    }
   `;
   
   document.head.appendChild(style);
@@ -325,6 +332,19 @@ function enhanceWithReflectionTokens(html: string): string {
       `<span class="reflection-token ${pattern.class}">$&</span>`
     );
   });
+  
+  // 增加处理文档列表项，在文档项之间添加换行
+  // 匹配"文档1:"、"文档2:"、"文档 1:"等格式
+  enhancedHtml = enhancedHtml.replace(
+    /(文档\s*\d+\s*:)/g, 
+    '<br><br><strong>$1</strong>'
+  );
+  
+  // 处理"总结:"和"总结："格式，增加换行和加粗
+  enhancedHtml = enhancedHtml.replace(
+    /(总结\s*[:：])/g,
+    '<br><br><strong>$1</strong>'
+  );
   
   return enhancedHtml;
 }

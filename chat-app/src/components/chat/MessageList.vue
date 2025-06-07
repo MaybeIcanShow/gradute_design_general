@@ -191,7 +191,7 @@ const uploadButtonText = computed(() => {
   if (uploadingImage.value) {
     return '正在上传...';
   } else if (props.chatType === 'history') {
-    return '历史模式禁止上传';
+    return '教育知识点问答模式禁止上传';
   } else if (props.chatType === 'general') {
     return '通用模式禁止上传';
   } else {
