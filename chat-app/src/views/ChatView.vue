@@ -167,11 +167,8 @@ const updateSessionTitle = async (sessionId: string, title: string) => {
       closeBtn: true,
     });
     
-    // 更新本地会话标题
-    const session = sessions.value.find(s => String(s.id) === sessionId);
-    if (session) {
-      session.title = title;
-    }
+    // 重新获取会话列表以确保UI更新
+    await fetchSessions();
   } catch (error) {
     console.error('更新会话标题失败:', error);
     MessagePlugin.error({

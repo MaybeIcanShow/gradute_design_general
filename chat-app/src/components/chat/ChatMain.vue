@@ -171,7 +171,7 @@ const handleSendMessage = async (content: string, imageFile: File | null = null,
         
         // Upload the image with retry logic
         const maxRetries = 2;
-        let uploadError = null;
+        let uploadError: any = null;
         
         for (let attempt = 0; attempt <= maxRetries; attempt++) {
           try {
@@ -182,6 +182,9 @@ const handleSendMessage = async (content: string, imageFile: File | null = null,
             
             imagePath = await messagesApi.uploadImage(sessionId, imageFile);
             console.log('[ChatMain] Image uploaded successfully:', imagePath);
+            
+            // On success, clear the error and break the loop
+            uploadError = null;
             
             // Update user message with the image path
             userMessage.image_path = imagePath;
@@ -201,87 +204,70 @@ const handleSendMessage = async (content: string, imageFile: File | null = null,
             console.error(`[ChatMain] Upload attempt ${attempt + 1} failed:`, error);
             uploadError = error;
             
-            // Last attempt failed, don't wait for another retry
-            if (attempt === maxRetries) {
-              throw error;
+            // Wait before the next retry
+            if (attempt < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
             }
-            
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000));
           }
         }
         
-        // If we got here with uploadError still set, it means all retries failed
-        if (uploadError && !imagePath) {
-          const dialog = DialogPlugin.confirm({
-            header: '图片上传失败',
-            body: '是否继续发送文本消息？',
-            confirmBtn: '继续发送',
-            cancelBtn: '取消',
-            closeOnEscKeydown: true,
-            closeOnOverlayClick: true,
-            theme: 'warning',
-            onConfirm: () => {
-              console.log('[ChatMain] Continuing without image after user confirmation');
-              imagePath = null;
-              // 关闭确认对话框
-              dialog.hide();
-            },
-            onClose: () => {
-              console.log('[ChatMain] User cancelled message after image upload failure');
-              sending.value = false;
-              // Remove the messages since we're cancelling
-              messages.value = messages.value.filter(m => m.id !== aiMessageId && m.id !== userMessage.id);
-              // Notify UI that we're done with uploading and there was an error
-              MessagePlugin.error({
-                content: '图片上传失败: ' + (uploadError.message || '未知错误'),
-                duration: 30000,
-                closeBtn: true,
-              });
-            }
+        // After all retries, if uploadError is still set, it means all attempts failed.
+        if (uploadError) {
+          console.log('[ChatMain] Image upload failed after all retries. Waiting 5 seconds before showing dialog.');
+          await new Promise(resolve => setTimeout(resolve, 5000));
+
+          const userChoice = await new Promise<'confirm' | 'cancel'>((resolve) => {
+            const dialog = DialogPlugin.confirm({
+              header: '图片上传失败',
+              body: '是否继续发送文本消息？',
+              confirmBtn: '继续发送',
+              cancelBtn: '取消',
+              closeOnEscKeydown: true,
+              closeOnOverlayClick: true,
+              theme: 'warning',
+              onConfirm: () => {
+                dialog.hide();
+                resolve('confirm');
+              },
+              onClose: () => { // This handles cancel button, Esc, overlay click
+                dialog.hide();
+                resolve('cancel');
+              }
+            });
           });
-        } else {
-          throw uploadError;
-        }
-      } catch (error: any) {
-        console.error('[ChatMain] 图片上传失败:', error.message, error.stack, error);
-        console.error('[ChatMain] 图片上传详细错误:', {
-          name: error.name,
-          message: error.message,
-          status: error.status,
-          statusText: error.statusText,
-          data: error.data,
-          stack: error.stack
-        });
-        
-        // 使用DialogPlugin替代原生confirm
-        const dialog = DialogPlugin.confirm({
-          header: '图片上传失败',
-          body: '是否继续发送文本消息？',
-          confirmBtn: '继续发送',
-          cancelBtn: '取消',
-          closeOnEscKeydown: true,
-          closeOnOverlayClick: true,
-          theme: 'warning',
-          onConfirm: () => {
+
+          if (userChoice === 'confirm') {
             console.log('[ChatMain] Continuing without image after user confirmation');
             imagePath = null;
-            // 关闭确认对话框
-            dialog.hide();
-          },
-          onClose: () => {
+            // The user message in the array might have an image path from a failed retry attempt, clean it.
+            const userIndex = messages.value.findIndex(m => m.id === userMessage.id);
+            if (userIndex !== -1) {
+              messages.value[userIndex].image_path = undefined;
+            }
+          } else { // 'cancel'
             console.log('[ChatMain] User cancelled message after image upload failure');
             sending.value = false;
             // Remove the messages since we're cancelling
             messages.value = messages.value.filter(m => m.id !== aiMessageId && m.id !== userMessage.id);
-            // Notify UI that we're done with uploading and there was an error
             MessagePlugin.error({
-              content: '图片上传失败: ' + (error.message || '未知错误'),
+              content: '图片上传失败: ' + (uploadError.message || '未知错误'),
               duration: 30000,
               closeBtn: true,
             });
+            return; // Stop execution of handleSendMessage
           }
+        }
+      } catch (error: any) {
+        // This catch block handles unexpected errors during the upload process.
+        console.error('[ChatMain] 图片上传时发生意外错误:', error?.message, error?.stack, error);
+        sending.value = false;
+        messages.value = messages.value.filter(m => m.id !== aiMessageId && m.id !== userMessage.id);
+        MessagePlugin.error({
+          content: '图片上传时发生意外错误: ' + (error?.message || '未知错误'),
+          duration: 30000,
+          closeBtn: true,
         });
+        return;
       }
     } else {
       // No image, add messages directly
